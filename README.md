@@ -21,9 +21,7 @@ Gemini runs as a **native MCP tool**, not a bash script. Claude calls it directl
 ### One command
 
 ```bash
-claude mcp add --scope user gemini-mcp-connect \
-  -e GEMINI_API_KEY=your_key_here \
-  -- uvx gemini-mcp-connect
+claude mcp add --scope user gemini-mcp-connect \ -e GEMINI_API_KEY=your_key_here \ -- uvx gemini-mcp-connect
 ```
 
 Get a free API key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
