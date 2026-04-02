@@ -79,7 +79,7 @@ if (Test-Path $EnvDest) {
 }
 
 # ── 6. Install slash commands ─────────────────────────────────────────────────
-$GeminiCommands = @("lite", "flash", "pro", "status", "review", "validate", "activate", "security", "debug", "config")
+$GeminiCommands = @("model", "status", "review", "validate", "activate", "security", "debug", "config")
 
 if ($Remote) {
     foreach ($Cmd in $GeminiCommands) {
@@ -172,9 +172,7 @@ Write-Host "  validate_plan(plan)            - validate implementation plan"
 Write-Host "  gemini_status()                - check daily quota"
 Write-Host ""
 Write-Host "Available slash commands:"
-Write-Host "  /gemini:lite <prompt>          - Gemini Lite (fast, economical)"
-Write-Host "  /gemini:flash <prompt>         - Gemini Flash (balanced)"
-Write-Host "  /gemini:pro <prompt>           - Gemini Pro (max reasoning, 100 req/day)"
+Write-Host "  /gemini:model <lite|flash|pro> <prompt> - query Gemini with chosen tier"
 Write-Host "  /gemini:status                 - check daily quota"
 Write-Host "  /gemini:review <file|code>     - critical code review"
 Write-Host "  /gemini:validate <plan>        - validate plan before execution"

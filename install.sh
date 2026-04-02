@@ -85,7 +85,7 @@ else
 fi
 
 # ── 6. Install slash commands ─────────────────────────────────────────────────
-GEMINI_COMMANDS=(lite flash pro status review validate activate security debug config)
+GEMINI_COMMANDS=(model status review validate activate security debug config)
 
 if $REMOTE; then
     for CMD in "${GEMINI_COMMANDS[@]}"; do
@@ -184,9 +184,7 @@ echo "  validate_plan(plan)            — validate implementation plan"
 echo "  gemini_status()                — check daily quota"
 echo ""
 echo "Available slash commands:"
-echo "  /gemini:lite <prompt>          — Gemini Lite (fast, economical)"
-echo "  /gemini:flash <prompt>         — Gemini Flash (balanced)"
-echo "  /gemini:pro <prompt>           — Gemini Pro (max reasoning, 100 req/day)"
+echo "  /gemini:model <lite|flash|pro> <prompt> — query Gemini with chosen tier"
 echo "  /gemini:status                 — check daily quota"
 echo "  /gemini:review <file|code>     — critical code review"
 echo "  /gemini:validate <plan>        — validate plan before execution"

@@ -1,6 +1,6 @@
 # gemini-mcp-connect
 
-A Claude Code plugin that connects **Claude** to **Google Gemini** as a native MCP tool — enabling dual-AI code review, plan validation, and critical second-opinion analysis.
+A Claude Code plugin that connects **Claude** to **Google Gemini** as a native MCP tool — enabling dual-AI code review, plan validation, security audits, and critical second-opinion analysis.
 
 [![PyPI](https://img.shields.io/pypi/v/gemini-mcp-connect)](https://pypi.org/project/gemini-mcp-connect/)
 [![Python](https://img.shields.io/pypi/pyversions/gemini-mcp-connect)](https://pypi.org/project/gemini-mcp-connect/)
@@ -30,7 +30,9 @@ curl -fsSL https://raw.githubusercontent.com/StealthyLabsHQ/gemini-mcp-connect/m
 irm https://raw.githubusercontent.com/StealthyLabsHQ/gemini-mcp-connect/main/install.ps1 | iex
 ```
 
-Both scripts will prompt for your Gemini API key. Get a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+Both scripts prompt for your Gemini API key. Get a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+
+If you skip the key during install, activate later with `/gemini:activate YOUR_KEY` in Claude Code.
 
 ---
 
@@ -60,9 +62,41 @@ cd gemini-mcp-connect
 
 ---
 
-## Usage
+## Slash commands
 
-### Tier prefix (fastest way)
+| Command | Description |
+|---------|-------------|
+| `/gemini:model <lite\|flash\|pro> <prompt>` | Query Gemini with the chosen tier |
+| `/gemini:review <file or code>` | Critical code review (CRITICAL / WARNING / SUGGESTION) |
+| `/gemini:validate <plan>` | Validate a plan before executing (PROCEED / REVISE / DO NOT PROCEED) |
+| `/gemini:security <file or code>` | Security audit — OWASP Top 10, secrets, injections |
+| `/gemini:debug <error>` | Diagnose an error or stack trace — root cause + fix |
+| `/gemini:config [setting] [value]` | View or update settings (thinking, temperature, media…) |
+| `/gemini:status` | Remaining API quota for today |
+| `/gemini:activate <key>` | Set your Gemini API key (no restart needed) |
+
+### /gemini:model examples
+
+```
+/gemini:model flash what is the difference between TCP and UDP?
+/gemini:model pro review this architecture for scalability issues
+/gemini:model lite quick summary of this file
+```
+
+### /gemini:config examples
+
+```
+/gemini:config                   → show all current settings
+/gemini:config thinking high     → set thinking level to HIGH
+/gemini:config thinking off      → disable thinking (faster)
+/gemini:config temperature 0.5   → more deterministic responses
+/gemini:config media high        → higher media resolution
+/gemini:config tokens 32768      → limit output length
+```
+
+---
+
+## Tier prefix (fastest way)
 
 Start any message with `pro,`, `flash,` or `lite,` to choose the Gemini model for that task:
 
@@ -76,7 +110,7 @@ No prefix → `pro` by default.
 
 ---
 
-### MCP Tools
+## MCP Tools
 
 Claude calls these tools natively — no bash command needed.
 
@@ -85,6 +119,10 @@ Claude calls these tools natively — no bash command needed.
 | `query_gemini(prompt, tier)` | `pro` | Open-ended question to Gemini |
 | `review_code(code, language, tier)` | `flash` | Critical code review |
 | `validate_plan(plan, tier)` | `pro` | Validate a plan before executing |
+| `security_audit(code, language, tier)` | `pro` | Security audit (OWASP, secrets, injections) |
+| `debug_error(error, context, tier)` | `flash` | Diagnose errors and stack traces |
+| `configure_gemini(setting, value)` | — | View/update configuration settings |
+| `activate_gemini(api_key)` | — | Set API key without restart |
 | `gemini_status()` | — | Remaining quota for today |
 
 ---
@@ -115,16 +153,15 @@ The `pro` tier is rate-limited to **100 requests/day** by default (~$1.60/day ma
 
 ## Configuration
 
-All settings are passed as environment variables via `claude mcp add -e`:
+Managed via `/gemini:config` or by setting environment variables (`claude mcp add -e`).
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `GEMINI_API_KEY` | — | **Required.** Your Gemini API key |
-| `GEMINI_TEMPERATURE` | `1.0` | `0.0` deterministic → `2.0` creative |
-| `GEMINI_THINKING_LEVEL` | `HIGH` | `OFF` / `LOW` / `MEDIUM` / `HIGH` |
-| `GEMINI_MAX_OUTPUT_TOKENS` | `65536` | Max response length |
-| `GEMINI_TOP_P` | `0.95` | Token sampling breadth |
-| `GEMINI_MEDIA_RESOLUTION` | `MEDIUM` | `LOW` / `MEDIUM` / `HIGH` |
+| Setting | Variable | Default | Values |
+|---------|----------|---------|--------|
+| `thinking` | `GEMINI_THINKING_LEVEL` | `HIGH` | `OFF` / `LOW` / `MEDIUM` / `HIGH` |
+| `temperature` | `GEMINI_TEMPERATURE` | `1.0` | `0.0` – `2.0` |
+| `media` | `GEMINI_MEDIA_RESOLUTION` | `MEDIUM` | `LOW` / `MEDIUM` / `HIGH` |
+| `tokens` | `GEMINI_MAX_OUTPUT_TOKENS` | `65536` | `1` – `65536` |
+| `top_p` | `GEMINI_TOP_P` | `0.95` | `0.0` – `1.0` |
 
 ---
 
@@ -132,21 +169,21 @@ All settings are passed as environment variables via `claude mcp add -e`:
 
 ```
 gemini-mcp-connect/
-├── gemini_bridge/           # Python package
-│   ├── core.py              # Shared: API call, rate limiting, config
-│   ├── server.py            # MCP server entry point
-│   └── cli.py               # CLI entry point
-├── .claude-plugin/
-│   └── plugin.json          # Plugin metadata
-├── commands/                # /gemini, /gemini-status slash commands
-│   └── gemini/              # /gemini:lite, :flash, :pro, :status, :review, :validate
-├── skills/                  # /review-code, /validate-plan
-├── agents/                  # gemini-reviewer agent definition
-├── hooks/                   # Pre-edit review hook (optional)
-├── .mcp.json                # Project-scoped MCP config
-├── pyproject.toml           # PyPI packaging
-├── install.sh               # macOS/Linux installer
-└── install.ps1              # Windows installer
+├── gemini_bridge_mcp.py         # MCP server (main entry point)
+├── gemini_bridge/               # Python package (CLI + shared core)
+├── commands/
+│   └── gemini/                  # Slash commands
+│       ├── model.md             # /gemini:model <tier> <prompt>
+│       ├── review.md            # /gemini:review
+│       ├── validate.md          # /gemini:validate
+│       ├── security.md          # /gemini:security
+│       ├── debug.md             # /gemini:debug
+│       ├── config.md            # /gemini:config
+│       ├── status.md            # /gemini:status
+│       └── activate.md          # /gemini:activate
+├── install.sh                   # macOS/Linux installer
+├── install.ps1                  # Windows installer
+└── pyproject.toml               # PyPI packaging
 ```
 
 ---
