@@ -67,12 +67,21 @@ if (Test-Path $EnvDest) {
 # ── 6. Install slash commands & skills ───────────────────────────────────────
 $ScriptPath = "$PluginDir\gemini_bridge.py" -replace "\\", "/"
 
-foreach ($File in (Get-ChildItem "commands\*.md", "skills\*.md")) {
+# Flat commands (legacy)
+foreach ($File in (Get-ChildItem "commands\*.md", "skills\*.md" -ErrorAction SilentlyContinue)) {
     $Dest = "$CommandsDir\$($File.Name)"
     $Content = Get-Content $File.FullName -Raw
     $Content = $Content -replace [regex]::Escape("C:/Users/stealthy/.claude/plugins/gemini_bridge.py"), $ScriptPath
     Set-Content -Path $Dest -Value $Content
     Ok "Installed $($File.Name) → $CommandsDir\"
+}
+
+# Namespaced commands (gemini:*)
+$GeminiCmdDir = "$CommandsDir\gemini"
+New-Item -ItemType Directory -Force -Path $GeminiCmdDir | Out-Null
+foreach ($File in (Get-ChildItem "commands\gemini\*.md" -ErrorAction SilentlyContinue)) {
+    Copy-Item $File.FullName "$GeminiCmdDir\$($File.Name)" -Force
+    Ok "Installed gemini\$($File.Name) → $GeminiCmdDir\"
 }
 
 # ── 7. Add CLAUDE.md workflow instructions ────────────────────────────────────
@@ -152,9 +161,11 @@ Write-Host "  validate_plan(plan)            — validate implementation plan"
 Write-Host "  gemini_status()                — check daily quota"
 Write-Host ""
 Write-Host "Available slash commands:"
-Write-Host "  /gemini <prompt>               — query Gemini"
-Write-Host "  /gemini-status                 — check daily quota"
-Write-Host "  /review-code <code>            — critical code review"
-Write-Host "  /validate-plan <plan>          — validate implementation plan"
+Write-Host "  /gemini:lite <prompt>          — Gemini Lite (fast, economical)"
+Write-Host "  /gemini:flash <prompt>         — Gemini Flash (balanced)"
+Write-Host "  /gemini:pro <prompt>           — Gemini Pro (max reasoning, 100 req/day)"
+Write-Host "  /gemini:status                 — check daily quota"
+Write-Host "  /gemini:review <file|code>     — critical code review"
+Write-Host "  /gemini:validate <plan>        — validate plan before execution"
 Write-Host ""
 Write-Host "Done. Restart Claude Code to load the MCP server." -ForegroundColor Green

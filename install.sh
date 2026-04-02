@@ -68,11 +68,20 @@ else
 fi
 
 # ── 6. Install slash commands ─────────────────────────────────────────────────
-# Update paths in commands to point to the installed script location
+# Flat commands (legacy)
 for FILE in commands/*.md skills/*.md; do
+    [ -f "$FILE" ] || continue
     DEST="$COMMANDS_DIR/$(basename "$FILE")"
     sed "s|C:/Users/stealthy/.claude/plugins/gemini_bridge.py|$PLUGIN_DIR/gemini_bridge.py|g" "$FILE" > "$DEST"
     ok "Installed $(basename "$FILE") → $COMMANDS_DIR/"
+done
+
+# Namespaced commands (gemini:*)
+mkdir -p "$COMMANDS_DIR/gemini"
+for FILE in commands/gemini/*.md; do
+    [ -f "$FILE" ] || continue
+    cp "$FILE" "$COMMANDS_DIR/gemini/$(basename "$FILE")"
+    ok "Installed gemini/$(basename "$FILE") → $COMMANDS_DIR/gemini/"
 done
 
 # ── 7. Add CLAUDE.md workflow instructions ────────────────────────────────────
@@ -158,9 +167,11 @@ echo "  validate_plan(plan)            — validate implementation plan"
 echo "  gemini_status()                — check daily quota"
 echo ""
 echo "Available slash commands:"
-echo "  /gemini <prompt>               — query Gemini"
-echo "  /gemini-status                 — check daily quota"
-echo "  /review-code <code>            — critical code review"
-echo "  /validate-plan <plan>          — validate implementation plan"
+echo "  /gemini:lite <prompt>          — Gemini Lite (fast, economical)"
+echo "  /gemini:flash <prompt>         — Gemini Flash (balanced)"
+echo "  /gemini:pro <prompt>           — Gemini Pro (max reasoning, 100 req/day)"
+echo "  /gemini:status                 — check daily quota"
+echo "  /gemini:review <file|code>     — critical code review"
+echo "  /gemini:validate <plan>        — validate plan before execution"
 echo ""
 echo "Done. Restart Claude Code to load the MCP server."
