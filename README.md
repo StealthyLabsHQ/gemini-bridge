@@ -1,6 +1,6 @@
 # gemini-mcp-connect
 
-A Claude Code plugin that connects **Claude** to **Google Gemini** as a native MCP tool — enabling dual-AI code review, plan validation, security audits, and critical second-opinion analysis.
+A Claude Code plugin that connects **Claude** to **Google Gemini** as a native MCP tool - enabling dual-AI code review, plan validation, security audits, and critical second-opinion analysis.
 
 [![PyPI](https://img.shields.io/pypi/v/gemini-mcp-connect)](https://pypi.org/project/gemini-mcp-connect/)
 [![Python](https://img.shields.io/pypi/pyversions/gemini-mcp-connect)](https://pypi.org/project/gemini-mcp-connect/)
@@ -10,7 +10,7 @@ A Claude Code plugin that connects **Claude** to **Google Gemini** as a native M
 
 ## How it works
 
-Before modifying any file, Claude automatically submits its plan or code to Gemini for a critical independent review — logic flaws, security issues, wrong assumptions, optimizations. Only after integrating Gemini's feedback does Claude apply the changes.
+Before modifying any file, Claude automatically submits its plan or code to Gemini for a critical independent review - logic flaws, security issues, wrong assumptions, optimizations. Only after integrating Gemini's feedback does Claude apply the changes.
 
 Gemini runs as a **native MCP tool**, not a bash script. Claude calls it directly, the same way it uses any other tool.
 
@@ -69,8 +69,8 @@ cd gemini-mcp-connect
 | `/gemini:model <lite\|flash\|pro> <prompt>` | Query Gemini with the chosen tier |
 | `/gemini:review <file or code>` | Critical code review (CRITICAL / WARNING / SUGGESTION) |
 | `/gemini:validate <plan>` | Validate a plan before executing (PROCEED / REVISE / DO NOT PROCEED) |
-| `/gemini:security <file or code>` | Security audit — OWASP Top 10, secrets, injections |
-| `/gemini:debug <error>` | Diagnose an error or stack trace — root cause + fix |
+| `/gemini:security <file or code>` | Security audit - OWASP Top 10, secrets, injections |
+| `/gemini:debug <error>` | Diagnose an error or stack trace - root cause + fix |
 | `/gemini:config [setting] [value]` | View or update settings (thinking, temperature, media…) |
 | `/gemini:status` | Remaining API quota for today |
 | `/gemini:activate <key>` | Set your Gemini API key (no restart needed) |
@@ -112,7 +112,7 @@ No prefix → `pro` by default.
 
 ## MCP Tools
 
-Claude calls these tools natively — no bash command needed.
+Claude calls these tools natively - no bash command needed.
 
 | Tool | Default tier | Description |
 |------|-------------|-------------|
@@ -121,9 +121,9 @@ Claude calls these tools natively — no bash command needed.
 | `validate_plan(plan, tier)` | `pro` | Validate a plan before executing |
 | `security_audit(code, language, tier)` | `pro` | Security audit (OWASP, secrets, injections) |
 | `debug_error(error, context, tier)` | `flash` | Diagnose errors and stack traces |
-| `configure_gemini(setting, value)` | — | View/update configuration settings |
-| `activate_gemini(api_key)` | — | Set API key without restart |
-| `gemini_status()` | — | Remaining quota for today |
+| `configure_gemini(setting, value)` | - | View/update configuration settings |
+| `activate_gemini(api_key)` | - | Set API key without restart |
+| `gemini_status()` | - | Remaining quota for today |
 
 ---
 
@@ -190,4 +190,4 @@ gemini-mcp-connect/
 
 ## License
 
-MIT — [StealthyLabsHQ](https://github.com/StealthyLabsHQ)
+MIT - [StealthyLabsHQ](https://github.com/StealthyLabsHQ)
