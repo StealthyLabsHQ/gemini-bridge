@@ -354,6 +354,175 @@ def activate_gemini(api_key: str) -> str:
     return f"Gemini activated. Key saved to {BASE_DIR / '.env'}."
 
 
+@mcp.tool()
+def security_audit(code: str, language: str = "", tier: str = "pro") -> str:
+    """
+    Run a security-focused audit on code using Gemini.
+
+    Checks for OWASP Top 10 vulnerabilities, hardcoded secrets, injection
+    flaws, insecure dependencies, and other security issues.
+
+    Args:
+        code:     Code to audit (snippet, function, or full file content).
+        language: Programming language (e.g. 'python', 'typescript'). Auto-detected if empty.
+        tier:     'pro' (default, deep reasoning) or 'flash' (faster).
+    """
+    lang_hint = f"Language: {language}. " if language else ""
+    prompt = (
+        f"You are a senior application security engineer. {lang_hint}"
+        "Perform a thorough security audit of this code. Check for:\n"
+        "1. OWASP Top 10 vulnerabilities (injection, broken auth, XSS, IDOR, etc.)\n"
+        "2. Hardcoded secrets, API keys, passwords, or tokens\n"
+        "3. Insecure cryptography or hashing (MD5, SHA1, weak keys)\n"
+        "4. Command injection, path traversal, or unsafe deserialization\n"
+        "5. Missing input validation or improper error handling that leaks info\n"
+        "6. Insecure dependencies or dangerous function calls\n\n"
+        "For each finding:\n"
+        "- Severity: CRITICAL / HIGH / MEDIUM / LOW\n"
+        "- Location: function or line reference\n"
+        "- Vulnerability: clear description\n"
+        "- Exploit scenario: how an attacker could abuse this\n"
+        "- Fix: concrete corrected code\n\n"
+        "If no issues found, respond with 'CLEAN — no security issues found.' and a brief rationale.\n\n"
+        f"Code to audit:\n\n```{language}\n{code}\n```"
+    )
+    return _call_gemini(prompt, tier)
+
+
+@mcp.tool()
+def debug_error(error: str, context: str = "", tier: str = "flash") -> str:
+    """
+    Send an error or stack trace to Gemini for diagnosis and fix suggestions.
+
+    Args:
+        error:   The error message, exception, or stack trace to analyze.
+        context: Optional: relevant code snippet or description of what you were doing.
+        tier:    'flash' (default, fast) or 'pro' (deeper analysis for complex bugs).
+    """
+    ctx_section = f"\n\nContext / relevant code:\n{context}" if context else ""
+    prompt = (
+        "You are an expert debugger. Analyze this error and provide:\n"
+        "1. Root cause — what exactly is failing and why\n"
+        "2. Most likely fix — concrete code or command to resolve it\n"
+        "3. Alternative causes — if ambiguous, list 2-3 other possibilities\n"
+        "4. Prevention — how to avoid this class of error in the future\n\n"
+        "Be direct and specific. Skip generic advice.\n\n"
+        f"Error / stack trace:\n```\n{error}\n```"
+        f"{ctx_section}"
+    )
+    return _call_gemini(prompt, tier)
+
+
+@mcp.tool()
+def configure_gemini(setting: str = "", value: str = "") -> str:
+    """
+    View or update Gemini Bridge configuration settings.
+
+    Call with no arguments to view all current settings.
+    Call with setting + value to update a specific setting immediately
+    (takes effect for the current session and is saved to .env).
+
+    Supported settings:
+      thinking   → OFF / LOW / MEDIUM / HIGH  (thinking budget for pro & flash)
+      temperature → 0.0 – 2.0                 (0=deterministic, 2=max creative)
+      media      → LOW / MEDIUM / HIGH         (media resolution)
+      tokens     → 1 – 65536                  (max output tokens)
+      top_p      → 0.0 – 1.0                  (token sampling breadth)
+
+    Args:
+        setting: Setting name to update (thinking, temperature, media, tokens, top_p).
+        value:   New value for the setting.
+    """
+    ENV_KEYS = {
+        "thinking":    "GEMINI_THINKING_LEVEL",
+        "temperature": "GEMINI_TEMPERATURE",
+        "media":       "GEMINI_MEDIA_RESOLUTION",
+        "tokens":      "GEMINI_MAX_OUTPUT_TOKENS",
+        "top_p":       "GEMINI_TOP_P",
+    }
+    VALID_VALUES = {
+        "thinking": ["OFF", "LOW", "MEDIUM", "HIGH"],
+        "media":    ["LOW", "MEDIUM", "HIGH"],
+    }
+    DEFAULTS = {
+        "GEMINI_THINKING_LEVEL":    "HIGH",
+        "GEMINI_TEMPERATURE":       "1.0",
+        "GEMINI_MEDIA_RESOLUTION":  "MEDIUM",
+        "GEMINI_MAX_OUTPUT_TOKENS": "65536",
+        "GEMINI_TOP_P":             "0.95",
+    }
+
+    # No args → show current config
+    if not setting:
+        lines = ["Gemini Bridge — current configuration\n"]
+        for name, env_key in ENV_KEYS.items():
+            current = os.environ.get(env_key, DEFAULTS[env_key])
+            lines.append(f"  {name:<12} = {current}")
+        lines.append(f"\n  Config file: {BASE_DIR / '.env'}")
+        lines.append("  Use /gemini:config <setting> <value> to change a setting.")
+        return "\n".join(lines)
+
+    # Normalize
+    setting = setting.lower().strip()
+    value   = value.strip()
+
+    if setting not in ENV_KEYS:
+        return (
+            f"Error: unknown setting '{setting}'. "
+            f"Choose from: {', '.join(ENV_KEYS.keys())}"
+        )
+    if not value:
+        env_key = ENV_KEYS[setting]
+        current = os.environ.get(env_key, DEFAULTS[env_key])
+        return f"Current value of '{setting}': {current}"
+
+    env_key = ENV_KEYS[setting]
+
+    # Validate allowed values
+    if setting in VALID_VALUES:
+        value_upper = value.upper()
+        allowed = VALID_VALUES[setting]
+        if value_upper not in allowed:
+            return f"Error: '{value}' is not valid for '{setting}'. Choose from: {', '.join(allowed)}"
+        value = value_upper
+
+    # Validate numeric ranges
+    if setting == "temperature":
+        try:
+            f = float(value)
+            if not (0.0 <= f <= 2.0):
+                return "Error: temperature must be between 0.0 and 2.0"
+        except ValueError:
+            return "Error: temperature must be a number (e.g. 0.7)"
+
+    if setting == "top_p":
+        try:
+            f = float(value)
+            if not (0.0 <= f <= 1.0):
+                return "Error: top_p must be between 0.0 and 1.0"
+        except ValueError:
+            return "Error: top_p must be a number (e.g. 0.95)"
+
+    if setting == "tokens":
+        try:
+            i = int(value)
+            if not (1 <= i <= 65536):
+                return "Error: tokens must be between 1 and 65536"
+        except ValueError:
+            return "Error: tokens must be an integer (e.g. 32768)"
+
+    # Apply immediately
+    os.environ[env_key] = value
+
+    # Persist to .env
+    try:
+        _update_env_key(env_key, value)
+    except OSError as e:
+        return f"Setting applied for this session, but could not save to .env: {e}"
+
+    return f"✓ {setting} = {value} (saved to {BASE_DIR / '.env'}, active immediately)"
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":

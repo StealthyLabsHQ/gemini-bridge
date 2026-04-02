@@ -85,7 +85,7 @@ else
 fi
 
 # ── 6. Install slash commands ─────────────────────────────────────────────────
-GEMINI_COMMANDS=(lite flash pro status review validate activate)
+GEMINI_COMMANDS=(lite flash pro status review validate activate security debug config)
 
 if $REMOTE; then
     for CMD in "${GEMINI_COMMANDS[@]}"; do
@@ -190,5 +190,8 @@ echo "  /gemini:pro <prompt>           — Gemini Pro (max reasoning, 100 req/da
 echo "  /gemini:status                 — check daily quota"
 echo "  /gemini:review <file|code>     — critical code review"
 echo "  /gemini:validate <plan>        — validate plan before execution"
+echo "  /gemini:security <file|code>   — security audit (OWASP, secrets, injections)"
+echo "  /gemini:debug <error>          — diagnose error or stack trace"
+echo "  /gemini:config [setting value] — view/change settings (thinking, temperature, media...)"
 echo ""
 echo "Done. Restart Claude Code to load the MCP server."

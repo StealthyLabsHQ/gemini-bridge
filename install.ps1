@@ -79,7 +79,7 @@ if (Test-Path $EnvDest) {
 }
 
 # ── 6. Install slash commands ─────────────────────────────────────────────────
-$GeminiCommands = @("lite", "flash", "pro", "status", "review", "validate", "activate")
+$GeminiCommands = @("lite", "flash", "pro", "status", "review", "validate", "activate", "security", "debug", "config")
 
 if ($Remote) {
     foreach ($Cmd in $GeminiCommands) {
@@ -178,5 +178,8 @@ Write-Host "  /gemini:pro <prompt>           - Gemini Pro (max reasoning, 100 re
 Write-Host "  /gemini:status                 - check daily quota"
 Write-Host "  /gemini:review <file|code>     - critical code review"
 Write-Host "  /gemini:validate <plan>        - validate plan before execution"
+Write-Host "  /gemini:security <file|code>   - security audit (OWASP, secrets, injections)"
+Write-Host "  /gemini:debug <error>          - diagnose error or stack trace"
+Write-Host "  /gemini:config [setting value] - view/change settings (thinking, temperature, media...)"
 Write-Host ""
 Write-Host "Done. Restart Claude Code to load the MCP server." -ForegroundColor Green
